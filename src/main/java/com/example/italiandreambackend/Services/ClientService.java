@@ -10,8 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ClientService implements IClientService{
@@ -23,6 +22,9 @@ public class ClientService implements IClientService{
     PaiementService paiementService;
     @Autowired
     PasswordUtil passwordUtil;
+
+    @Autowired
+    EmailService emailService;
 
     @Override
     public ResponseEntity<String> createClient(Client client) {
@@ -66,17 +68,18 @@ public class ClientService implements IClientService{
         Optional<Client> optionalClient = clientRepository.findById(loginRequest.getClientId());
 
         if (!optionalClient.isPresent()) {
-            return new ResponseEntity<>("Client doesn't exist", HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("message", "Client doesn't exist"));
         }
 
         Client client = optionalClient.get();
-
         String currentPassword = client.getPassword();
 
         if (passwordUtil.matchPassword(loginRequest.getPassword(), currentPassword)) {
-            return new ResponseEntity<>(client.getClientId(), HttpStatus.OK);
+            return ResponseEntity.ok(Collections.singletonMap("clientId", client.getClientId()));
         } else {
-            return new ResponseEntity<>("Wrong Password", HttpStatus.NOT_ACCEPTABLE);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("message", "Wrong Password"));
         }
     }
 
@@ -94,22 +97,62 @@ public class ClientService implements IClientService{
     public ResponseEntity<?> verifyClientByEmail(String email) {
         Optional<Client> optionalClient = clientRepository.findClientByEmail(email);
         if(optionalClient.isPresent()){
-            return new ResponseEntity<>("Client found",HttpStatus.OK);
+            Random random = new Random();
+            int min = 1000;
+            int max = 9999;
+            int code = random.nextInt(max - min + 1) + min;
+            Client c = optionalClient.get();
+            c.setCode(code);
+            clientRepository.save(c);
+            String subject = "Password Reset Code";
+            String body = String.format(
+                    "Bonjour %s,\n\n" +
+                            "Nous avons reçu une demande pour réinitialiser votre mot de passe. Veuillez utiliser le code suivant pour procéder à la réinitialisation de votre mot de passe :\n\n" +
+                            "       < %d >\n\n" +
+                            "Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail. Votre compte est en sécurité.\n\n" +
+                            "Merci,\n" +
+                            "L'équipe Italian Dream", c.getPrenom(), code);
+
+            emailService.sendEmail(c.getEmail(), subject, body);
+
+            return new ResponseEntity<>(Map.of("message", "Client found"), HttpStatus.OK);
         }
-        return new ResponseEntity<>("Client not found",HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(Map.of("message", "Client not found"), HttpStatus.NOT_FOUND);
+    }
+
+    @Override
+    public ResponseEntity<?> verifyClientByCode(String email, Integer code) {
+
+        Optional<Client> optionalClient = clientRepository.findClientByEmail(email);
+        if(optionalClient.isPresent()){
+            Client c = optionalClient.get();
+            Integer dbCode = c.getCode();
+            if (dbCode != null && dbCode.equals(code)) {
+                return new ResponseEntity<>(Map.of("message", "Code vérifié avec succès"), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(Map.of("message", "Code incorrect"), HttpStatus.UNAUTHORIZED);
+            }
+        }
+
+        return new ResponseEntity<>(Map.of("message", "Client non trouvé"), HttpStatus.NOT_FOUND);
+
     }
 
     @Override
     public ResponseEntity<?> resetPassword(String email, String password) {
         Optional<Client> optionalClient = clientRepository.findClientByEmail(email);
 
+        Map<String, Object> response = new HashMap<>();
+
         if (optionalClient.isPresent()) {
             Client c = optionalClient.get();
             c.setPassword(passwordUtil.encryptPassword(password));
             clientRepository.save(c);
-            return new ResponseEntity<>("Password changed", HttpStatus.OK);
+            response.put("message", "Password changed successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+            response.put("message", "Client not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 

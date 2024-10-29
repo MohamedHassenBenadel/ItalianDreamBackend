@@ -9,7 +9,11 @@ public interface IClientService {
     ResponseEntity<?> login(LoginRequest loginRequest);
     ResponseEntity<?> getAllClients();
     ResponseEntity<?> verifyClientByEmail(String email);
+
+    ResponseEntity<?> verifyClientByCode(String email ,  Integer code);
     ResponseEntity<?> resetPassword(String email ,String password);
+
+
 
 
 

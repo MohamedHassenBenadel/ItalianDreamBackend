@@ -28,6 +28,12 @@ public class Client implements Serializable {
     Education  education;
     String orientation ;
     Boolean banned ;
+
+    @Column(nullable = true)
+    Integer code;
+
+    @Enumerated(EnumType.STRING) // Use EnumType.STRING to persist as String
+    @Column(nullable = false) // Optional: This makes sure the column cannot be null
     Role type;
 
     @OneToOne(cascade = CascadeType.ALL)

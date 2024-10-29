@@ -36,6 +36,11 @@ public class ClientController {
         return iClientService.verifyClientByEmail(email);
     }
 
+    @PostMapping("verify-code")
+    public ResponseEntity<?> verifyClientByCode(@RequestParam String email, @RequestParam Integer code) {
+        return iClientService.verifyClientByCode(email, code);
+    }
+
     @PutMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
         return iClientService.resetPassword(request.getEmail(), request.getPassword());
