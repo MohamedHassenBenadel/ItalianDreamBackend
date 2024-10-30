@@ -1,5 +1,6 @@
 package com.example.italiandreambackend.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -13,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @FieldDefaults(level= AccessLevel.PRIVATE)
-public class Client implements Serializable {
+public class Client {
 
     @Id
     String clientId ;
@@ -25,6 +26,7 @@ public class Client implements Serializable {
     Integer age ;
     @Column(unique = true)
     String email ;
+    @Enumerated(EnumType.STRING)
     Education  education;
     String orientation ;
     Boolean banned ;

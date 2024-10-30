@@ -1,6 +1,7 @@
 package com.example.italiandreambackend.Services;
 
 import com.example.italiandreambackend.Entity.Client;
+import com.example.italiandreambackend.Entity.ClientDTO;
 import com.example.italiandreambackend.Entity.Paiement;
 import com.example.italiandreambackend.Request.LoginRequest;
 import com.example.italiandreambackend.Repository.ClientRepository;
@@ -23,6 +24,8 @@ public class ClientService implements IClientService{
     @Autowired
     PasswordUtil passwordUtil;
 
+    @Autowired
+    ClientDTOMapper clientDTOMapper;
     @Autowired
     EmailService emailService;
 
@@ -153,6 +156,37 @@ public class ClientService implements IClientService{
         } else {
             response.put("message", "Client not found");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> ChangePassword(String clientId, String password) {
+        Optional<Client> optionalClient = clientRepository.findById(clientId);
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (optionalClient.isPresent()) {
+            Client c = optionalClient.get();
+            c.setPassword(passwordUtil.encryptPassword(password));
+            clientRepository.save(c);
+            response.put("message", "Password changed successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            response.put("message", "Client not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getClientProfile(String clientId) {
+        Optional<Client> optionalClient = clientRepository.findById(clientId);
+
+        if (optionalClient.isPresent()) {
+            Client client = optionalClient.get();
+            ClientDTO clientDTO = clientDTOMapper.apply(client);
+            return new ResponseEntity<>(clientDTO, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(Collections.singletonMap("message", "Client not found"), HttpStatus.NOT_FOUND);
         }
     }
 
