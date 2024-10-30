@@ -9,10 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PaiementService implements IPaiementService{
@@ -96,7 +93,9 @@ public class PaiementService implements IPaiementService{
     public ResponseEntity<?> updatePayment(String client_id, List<Paiement> updatedPayments) {
         Optional<Client> optionalClient = clientRepository.findById(client_id);
         if (!optionalClient.isPresent()) {
-            return new ResponseEntity<>("Client doesn't exist", HttpStatus.NOT_FOUND);
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Client doesn't exist", "success", false));
         }
 
         Client client = optionalClient.get();
@@ -109,7 +108,9 @@ public class PaiementService implements IPaiementService{
                     .orElse(null);
 
             if (paymentToUpdate == null) {
-                return new ResponseEntity<>("One or more payments not found", HttpStatus.NOT_FOUND);
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "One or more payments not found", "success", false));
             }
 
             paymentToUpdate.setMontantPaye(updatedPayment.getMontantPaye());
@@ -119,7 +120,10 @@ public class PaiementService implements IPaiementService{
         }
 
         clientRepository.save(client);
-        return new ResponseEntity<>("Payments updated successfully", HttpStatus.OK);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(Map.of("message", "Payments updated successfully", "success", true));
     }
 
     @Override

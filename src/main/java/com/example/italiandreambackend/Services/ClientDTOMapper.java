@@ -22,6 +22,11 @@ public class ClientDTOMapper implements Function<Client, ClientDTO> {
         clientDTO.setEmail(client.getEmail());
         clientDTO.setEducation(client.getEducation());
         clientDTO.setOrientation(client.getOrientation());
+        clientDTO.setType(client.getType());
+        clientDTO.setBanned(client.getBanned());
+        clientDTO.setCin(client.getCin());
+
+
 
         // Set the payments directly
         clientDTO.setPayments(client.getPayments());  // Directly set the payments list

@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.Optional;
 
 
@@ -195,5 +197,51 @@ public class DocumentService implements IDocumentService{
         DocumentsVisa updatedDocument = documentsVisaRepository.save(existingDocument);
         return ResponseEntity.ok(updatedDocument);
     }
+
+    public void initializeDocuments(Client client) {
+        LocalDate currentDate = LocalDate.now();
+        Date doc1DueDate = java.sql.Date.valueOf(currentDate.plusMonths(2).withDayOfMonth(1));
+        Date doc2DueDate = java.sql.Date.valueOf(currentDate.plusMonths(2).withDayOfMonth(7));
+        Date doc3DueDate = java.sql.Date.valueOf(currentDate.plusMonths(2).withDayOfMonth(15));
+
+        // Create and set default values for DocumentsUni
+        DocumentsUni documentsUni = new DocumentsUni();
+        documentsUni.setDoc1(false);
+        documentsUni.setDoc1DueDate(doc1DueDate);
+        documentsUni.setDoc2(false);
+        documentsUni.setDoc2DueDate(doc2DueDate);
+        documentsUni.setDoc3(false);
+        documentsUni.setDoc3DueDate(doc3DueDate);
+        documentsUni.setClient(client);
+        documentsUniRepository.save(documentsUni);
+
+        // Create and set default values for DocumentsBourse
+        DocumentsBourse documentsBourse = new DocumentsBourse();
+        documentsBourse.setDoc1(false);
+        documentsBourse.setDoc1DueDate(doc1DueDate);
+        documentsBourse.setDoc2(false);
+        documentsBourse.setDoc2DueDate(doc2DueDate);
+        documentsBourse.setDoc3(false);
+        documentsBourse.setDoc3DueDate(doc3DueDate);
+        documentsBourse.setClient(client);
+        documentsBourseRepository.save(documentsBourse);
+
+        // Create and set default values for DocumentsVisa
+        DocumentsVisa documentsVisa = new DocumentsVisa();
+        documentsVisa.setDoc1(false);
+        documentsVisa.setDoc1DueDate(doc1DueDate);
+        documentsVisa.setDoc2(false);
+        documentsVisa.setDoc2DueDate(doc2DueDate);
+        documentsVisa.setDoc3(false);
+        documentsVisa.setDoc3DueDate(doc3DueDate);
+        documentsVisa.setClient(client);
+        documentsVisaRepository.save(documentsVisa);
+
+        // Associate documents with the client
+        client.setDocumentsUni(documentsUni);
+        client.setDocumentsBourse(documentsBourse);
+        client.setDocumentsVisa(documentsVisa);
+    }
+
 
 }

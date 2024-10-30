@@ -1,8 +1,6 @@
 package com.example.italiandreambackend.Services;
 
-import com.example.italiandreambackend.Entity.Client;
-import com.example.italiandreambackend.Entity.ClientDTO;
-import com.example.italiandreambackend.Entity.Paiement;
+import com.example.italiandreambackend.Entity.*;
 import com.example.italiandreambackend.Request.LoginRequest;
 import com.example.italiandreambackend.Repository.ClientRepository;
 import lombok.AllArgsConstructor;
@@ -12,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ClientService implements IClientService{
@@ -21,6 +20,9 @@ public class ClientService implements IClientService{
 
     @Autowired
     PaiementService paiementService;
+
+    @Autowired
+    DocumentService documentService;
     @Autowired
     PasswordUtil passwordUtil;
 
@@ -30,39 +32,53 @@ public class ClientService implements IClientService{
     EmailService emailService;
 
     @Override
-    public ResponseEntity<String> createClient(Client client) {
-        // Check if the client with the given clientId, cin, or email already exists
+    public ResponseEntity<Map<String, Object>> createClient(Client client) {
+        Map<String, Object> response = new HashMap<>();
         Optional<Client> existingClientById = clientRepository.findById(client.getClientId());
         Optional<Client> existingClientByCin = clientRepository.findByCin(client.getCin());
         Optional<Client> existingClientByEmail = clientRepository.findByEmail(client.getEmail());
 
         if (existingClientById.isPresent()) {
-            return new ResponseEntity<>("Client with this ID already exists", HttpStatus.FOUND); // 302 FOUND
+            response.put("message", "Client with this ID already exists");
+            return new ResponseEntity<>(response, HttpStatus.FOUND); // 302 FOUND
         }
 
         if (existingClientByCin.isPresent()) {
-            return new ResponseEntity<>("Client with this CIN already exists", HttpStatus.CONFLICT); // 409 CONFLICT
+            response.put("message", "Client with this CIN already exists");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT); // 409 CONFLICT
         }
 
         if (existingClientByEmail.isPresent()) {
-            return new ResponseEntity<>("Client with this email already exists", HttpStatus.CONFLICT); // 409 CONFLICT
+            response.put("message", "Client with this email already exists");
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT); // 409 CONFLICT
         }
 
         try {
             // Encrypt the password
             client.setPassword(passwordUtil.encryptPassword(client.getPassword()));
-            // Save the client
-            List<Paiement> paiements = paiementService.createPayment(client);
-            client.setPayments(paiements);
+
+            // Save the client initially without documents
             Client registered = clientRepository.save(client);
 
-            if (registered != null) {
-                return new ResponseEntity<>("Client registered successfully", HttpStatus.OK); // 200 OK
-            } else {
-                return new ResponseEntity<>("Client registration failed for some reason", HttpStatus.INTERNAL_SERVER_ERROR); // 500 INTERNAL SERVER ERROR
-            }
+            // Create and assign initial payments
+            List<Paiement> paiements = paiementService.createPayment(client);
+            registered.setPayments(paiements);
+
+            // Initialize and save documents
+            documentService.initializeDocuments(registered);
+
+            // Save the client again with documents
+            clientRepository.save(registered);
+
+            // Send welcome email to the new client
+            emailService.sendWelcomeEmail(registered.getEmail(), registered.getClientId(), client.getCin().toString());
+
+            response.put("message", "Client registered successfully");
+            response.put("clientId", registered.getClientId());
+            return new ResponseEntity<>(response, HttpStatus.OK); // 200 OK
         } catch (Exception e) {
-            return new ResponseEntity<>("Client registration failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR); // 500 INTERNAL SERVER ERROR
+            response.put("message", "Client registration failed: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR); // 500 INTERNAL SERVER ERROR
         }
     }
 
@@ -93,7 +109,12 @@ public class ClientService implements IClientService{
         if (clients.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(clients);
+
+        List<ClientDTO> clientDTOs = clients.stream()
+                .map(clientDTOMapper)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(clientDTOs);
     }
 
     @Override
