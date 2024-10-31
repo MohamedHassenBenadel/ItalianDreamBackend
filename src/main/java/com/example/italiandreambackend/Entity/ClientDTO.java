@@ -16,7 +16,7 @@ public class ClientDTO {
     String clientId ;
     String prenom ;
     String nom ;
-    Integer cin ;
+    String cin ;
     Integer age ;
     String email ;
     Education  education;

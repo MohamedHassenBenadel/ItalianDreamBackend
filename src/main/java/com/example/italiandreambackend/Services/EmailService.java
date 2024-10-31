@@ -14,6 +14,7 @@ import java.util.Random;
 @Service
 public class EmailService {
 
+    final String to = "hassenbenadel37@gmail.com";
     @Autowired
     private JavaMailSender mailSender;
 
@@ -22,6 +23,20 @@ public class EmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
+
+        mailSender.send(message);
+    }
+
+    public void sendEmail(String sender, String tel, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+
+        String emailBody = "Mail: " + sender + "\n" +
+                "Tel: " + tel + "\n\n" +
+                body;
+
+        message.setText(emailBody);
 
         mailSender.send(message);
     }

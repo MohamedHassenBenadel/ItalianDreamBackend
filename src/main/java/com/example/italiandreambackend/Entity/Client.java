@@ -22,7 +22,7 @@ public class Client {
     String prenom ;
     String nom ;
     @Column(unique = true)
-    Integer cin ;
+    String cin ;
     Integer age ;
     @Column(unique = true)
     String email ;

@@ -11,10 +11,16 @@ public interface IClientService {
     ResponseEntity<?> verifyClientByEmail(String email);
     ResponseEntity<?> verifyClientByCode(String email ,  Integer code);
     ResponseEntity<?> resetPassword(String email ,String password);
-
     ResponseEntity<?> ChangePassword(String clientId ,String password);
-
     ResponseEntity<?> getClientProfile(String clientId);
+
+    ResponseEntity<?> BanClient(String clientId);
+    ResponseEntity<?> UnbanClient(String clientId);
+
+
+
+
+
 
 
 

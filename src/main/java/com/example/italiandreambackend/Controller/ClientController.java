@@ -56,9 +56,13 @@ public class ClientController {
     public ResponseEntity<?> getClientProfile(@RequestParam String clientId) {
         return iClientService.getClientProfile(clientId);
     }
+    @PutMapping("/ban-client")
+    public ResponseEntity<?> banClient(@RequestParam String clientId) {
+        return iClientService.BanClient(clientId);
+    }
 
-
-
-
-
+    @PutMapping("/unban-client")
+    public ResponseEntity<?> unbanClient(@RequestParam String clientId) {
+        return iClientService.UnbanClient(clientId);
+    }
 }

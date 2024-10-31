@@ -106,13 +106,15 @@ public class ClientService implements IClientService{
     public ResponseEntity<?> getAllClients() {
         List<Client> clients = clientRepository.findAll();
 
-        if (clients.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
+        // Filter clients to include only those with Role.User
         List<ClientDTO> clientDTOs = clients.stream()
+                .filter(client -> client.getType() == Role.User)
                 .map(clientDTOMapper)
                 .collect(Collectors.toList());
+
+        if (clientDTOs.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
         return ResponseEntity.ok(clientDTOs);
     }
@@ -208,6 +210,52 @@ public class ClientService implements IClientService{
             return new ResponseEntity<>(clientDTO, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(Collections.singletonMap("message", "Client not found"), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> BanClient(String clientId) {
+        Optional<Client> optionalClient = clientRepository.findById(clientId);
+        Map<String, Object> response = new HashMap<>();
+
+        if (optionalClient.isPresent()) {
+            Client client = optionalClient.get();
+            if (client.getBanned()) {
+                response.put("error", "This client is already banned");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            client.setBanned(true);
+            clientRepository.save(client);
+
+            response.put("message", "Client banned successfully");
+            response.put("clientId", clientId);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("error", "Client not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> UnbanClient(String clientId) {
+        Optional<Client> optionalClient = clientRepository.findById(clientId);
+        Map<String, Object> response = new HashMap<>();
+
+        if (optionalClient.isPresent()) {
+            Client client = optionalClient.get();
+            if (!client.getBanned()) {
+                response.put("error", "This client is already unbanned");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            client.setBanned(false);
+            clientRepository.save(client);
+
+            response.put("message", "Client unbanned successfully");
+            response.put("clientId", clientId);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("error", "Client not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 
